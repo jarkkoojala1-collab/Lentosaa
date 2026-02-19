@@ -1,253 +1,141 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="LentoSää">
-    <title>LentoSää - PPG & Salalento</title>
-    
-    <style>
-        :root {
-            --bg: #0f172a; --card-bg: rgba(30, 41, 59, 0.7);
-            --accent: #38bdf8; --success: #4ade80;
-            --warning: #fbbf24; --danger: #f87171; --text: #f1f5f9;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPG Sää</title>
 
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: var(--text); margin: 0; padding: 15px; min-height: 100vh;
-        }
+<style>
+body{
+    font-family:system-ui;
+    background:#0b1220;
+    color:white;
+    margin:0;
+    padding:15px;
+}
+h1{margin-top:0}
 
-        .logo-container { display: flex; justify-content: center; margin: 10px 0 0 0; }
-        .logo-svg {
-            width: 70px; height: 70px; fill: none; stroke: var(--accent);
-            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
-            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
-            animation: float 4s ease-in-out infinite;
-        }
+.hour{
+    display:flex;
+    justify-content:space-between;
+    padding:8px;
+    border-bottom:1px solid #223;
+}
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(-1deg); }
-            50% { transform: translateY(-8px) rotate(1deg); }
-        }
+.good{color:#6CFF8F}
+.medium{color:#FFD166}
+.bad{color:#FF6B6B}
 
-        #pwaPrompt {
-            display: none; background: var(--accent); color: #0f172a;
-            padding: 12px; border-radius: 12px; margin-bottom: 20px;
-            font-weight: 700; font-size: 0.85rem; text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); cursor: pointer;
-        }
-
-        .container { max-width: 500px; margin: auto; }
-        h1 { font-weight: 800; text-align: center; margin: 5px 0; color: var(--accent); font-size: 1.8rem; }
-        .subtitle { opacity: 0.6; font-size: 0.7rem; text-align: center; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;}
-        
-        .search-group { display: flex; background: var(--card-bg); padding: 5px; border-radius: 16px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-        input { flex: 1; background: transparent; border: none; color: white; padding: 12px; outline: none; font-size: 16px; }
-        button { background: var(--accent); border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; color: #0f172a; cursor: pointer; }
-        
-        .section { background: var(--card-bg); border-radius: 20px; padding: 18px; margin-bottom: 15px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
-        
-        #ppgStatus {
-            padding: 25px;
-            border: 2px solid rgba(56, 189, 248, 0.2);
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
-        }
-
-        .wind-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .wind-arrow { display: inline-block; color: var(--accent); transition: transform 0.5s; font-size: 1.3rem; }
-        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
-        
-        .scroll-x { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scrollbar-width: none; }
-        .hour-card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; min-width: 80px; text-align: center; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
-        
-        .spot-card { margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; border-left: 4px solid var(--accent); }
-        .spot-next { color: var(--success); font-weight: 700; font-size: 0.9rem; margin-top: 4px; display: block; }
-
-        #detailOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; display: none; padding: 30px 20px; box-sizing: border-box; overflow-y: auto; }
-        .close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .model-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .model-box { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        
-        .section-title { margin: 0 0 10px 5px; font-size: 0.8rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
-    </style>
+.card{
+    background:#111a2e;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:12px;
+}
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <div id="pwaPrompt" onclick="naytaOhje()">✨ Lisää LentoSää kotinäytölle</div>
+<h1>PPG Lentokeli</h1>
 
-        <div class="logo-container">
-            <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 12C3 12 6 5 12 5C18 5 21 12 21 12" stroke-width="1.5"/>
-                <path d="M3 12L12 19L21 12" stroke-width="1" opacity="0.4"/>
-                <circle cx="12" cy="19" r="1" fill="var(--accent)"/>
-            </svg>
-        </div>
+<div class="card">
+    <div id="status">Haetaan sijaintia…</div>
+</div>
 
-        <h1>LentoSää</h1>
-        <p class="subtitle">PPG & Salalento Tool</p>
+<div id="hours"></div>
 
-        <div class="search-group">
-            <input id="city" type="text" placeholder="Hae kaupunkia..." onkeypress="if(event.key==='Enter') haeSaa()">
-            <button onclick="haeSaa()">Hae</button>
-        </div>
-
-        <h2 id="otsikko" style="font-size: 1rem; opacity: 0.8; text-align: center; margin-bottom: 20px;">Ladataan...</h2>
-
-        <div id="mainContent" style="display:none;">
-            <div class="section" id="ppgStatus" style="text-align:center;">
-                <p>Analysoidaan pärinäkelejä...</p>
-            </div>
-
-            <div class="section">
-                <h3 class="section-title">Ylätuulet juuri nyt</h3>
-                <div class="wind-row"><span>Maanpinta</span><span id="v0">--</span><div id="d0" class="wind-arrow">↑</div></div>
-                <div class="wind-row"><span>500 m</span><span id="v500">--</span><div id="d500" class="wind-arrow">↑</div></div>
-                <div class="wind-row"><span>1000 m</span><span id="v1000">--</span><div id="d1000" class="wind-arrow">↑</div></div>
-                <div class="wind-row"><span>1500 m</span><span id="v1500">--</span><div id="d1500" class="wind-arrow">↑</div></div>
-            </div>
-
-            <h3 class="section-title" style="margin-top: 20px;">24h ennuste</h3>
-            <div id="tunnit" class="scroll-x"></div>
-
-            <div class="section" style="margin-top: 20px;">
-                <h3 class="section-title">Salalento-saumat?</h3>
-                <div id="spotList" style="font-size: 0.85rem;">Etsitään hiljaisia nosteita...</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="detailOverlay">
-        <div class="close-btn" onclick="closeDetails()">✕</div>
-        <h2 id="detailTime" style="margin-top:20px; font-weight:800;">Klo --</h2>
-        <div id="detailsGrid">
-            <div class="section"><h4>Maanpinta</h4><div class="model-grid" id="windGrid"></div></div>
-            <div class="section"><h4>500 m</h4><div class="model-grid" id="upperWindGrid500"></div></div>
-            <div class="section"><h4>1000 m</h4><div class="model-grid" id="upperWindGrid1000"></div></div>
-        </div>
-    </div>
 <script>
-let weatherData = null;
-
-function degDiff(a,b){
-    let d=Math.abs(a-b)%360;
-    return d>180?360-d:d;
+/* ==========================
+   TURBULENSSI-INDEKSI
+   ========================== */
+function turbulenceIndex(wind, gust, tempDiff){
+    let shear = gust - wind;
+    let index = wind*0.6 + shear*1.4 + Math.abs(tempDiff)*0.8;
+    return index;
 }
 
-function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length;}
-
-function models(idx, speedKey, dirKey){
-    const m=["_ecmwf_ifs04","_gfs_seamless","_icon_seamless"];
-    let speeds=[], dirs=[];
-    m.forEach(mod=>{
-        if(weatherData[speedKey+mod]){
-            speeds.push(weatherData[speedKey+mod][idx]);
-            dirs.push(weatherData[dirKey+mod][idx]);
-        }
-    });
-    return {speeds,dirs};
+function ppgStatus(index){
+    if(index < 8) return ["Hyvä", "good"];
+    if(index < 14) return ["Rajalla", "medium"];
+    return ["Huono", "bad"];
 }
 
-function turbulenceIndex(idx){
+/* ==========================
+   HAE SÄÄ
+   ========================== */
+async function haeSaa(lat,lon){
 
-    const sfc=models(idx,"windspeed_10m","winddirection_10m");
-    const h500=models(idx,"windspeed_950hPa","winddirection_950hPa");
+    document.getElementById("status").textContent="Haetaan säätä…";
 
-    if(!sfc.speeds.length||!h500.speeds.length) return 50;
+    const url=
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,windspeed_10m,windgusts_10m&forecast_days=1`;
 
-    // 1 Mallihajonta
-    const spreadSpeed=Math.max(...sfc.speeds)-Math.min(...sfc.speeds);
-    const spreadDir=Math.max(
-        degDiff(sfc.dirs[0],sfc.dirs[1]),
-        degDiff(sfc.dirs[0],sfc.dirs[2]),
-        degDiff(sfc.dirs[1],sfc.dirs[2])
+    const r=await fetch(url);
+    const data=await r.json();
+
+    renderHours(data.hourly);
+}
+
+/* ==========================
+   RENDER
+   ========================== */
+function renderHours(h){
+
+    const container=document.getElementById("hours");
+    container.innerHTML="";
+
+    let firstIndex=null;
+
+    for(let i=0;i<24;i++){
+
+        let wind=h.windspeed_10m[i];
+        let gust=h.windgusts_10m[i];
+        let temp=h.temperature_2m[i];
+
+        let tempDiff=i>0?temp-h.temperature_2m[i-1]:0;
+
+        let index=turbulenceIndex(wind,gust,tempDiff);
+        let [txt,cls]=ppgStatus(index);
+
+        if(firstIndex===null) firstIndex=index;
+
+        let row=document.createElement("div");
+        row.className="hour";
+
+        let time=h.time[i].split("T")[1];
+
+        row.innerHTML=`
+            <div>${time}</div>
+            <div>${wind.toFixed(1)} m/s</div>
+            <div class="${cls}">${txt}</div>
+        `;
+
+        container.appendChild(row);
+    }
+
+    let [txt,cls]=ppgStatus(firstIndex);
+    document.getElementById("status").innerHTML=
+        `Tämän hetken lentokeli: <b class="${cls}">${txt}</b>`;
+}
+
+/* ==========================
+   GEOLOKAATIO
+   ========================== */
+function start(){
+
+    if(!navigator.geolocation){
+        document.getElementById("status").textContent="Sijainti ei tuettu";
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        pos=>haeSaa(pos.coords.latitude,pos.coords.longitude),
+        ()=>document.getElementById("status").textContent="Sijaintia ei saatu"
     );
-
-    let modelScore = Math.min(40,(spreadSpeed*6)+(spreadDir/6));
-
-    // 2 Shear (pinta vs 500m)
-    const dirShear=degDiff(avg(sfc.dirs),avg(h500.dirs));
-    const speedShear=Math.abs(avg(h500.speeds)-avg(sfc.speeds));
-    let shearScore=Math.min(35,(dirShear/2)+(speedShear*4));
-
-    // 3 Gradientti
-    let gradientScore=Math.min(15,speedShear*3);
-
-    // 4 Perustuuli
-    const wind=avg(sfc.speeds);
-    let windScore=Math.min(20,wind*3);
-
-    return Math.round(modelScore+shearScore+gradientScore+windScore);
 }
 
-function ppgCategory(t){
-    if(t<20) return ["Lasia","Erittäin sileä ilmakerros","var(--success)"];
-    if(t<35) return ["Hyvä","Normaali iltalento","var(--success)"];
-    if(t<55) return ["OK","Pientä eloa ilmassa","var(--warning)"];
-    if(t<75) return ["Turbulentti","Vaatii kokemusta","var(--danger)"];
-    return ["Älä lennä","Rajakerros sekoaa","var(--danger)"];
-}
-
-function renderPPGStatus(idx){
-
-    const t=turbulenceIndex(idx);
-    const cat=ppgCategory(t);
-
-    document.getElementById("ppgStatus").innerHTML=`
-        <span class="status-badge" style="background:${cat[2]};color:#0f172a">${cat[0]}</span>
-        <div style="font-weight:800;font-size:1.2rem;margin:10px 0">PARAMOOTTORI-INDEXI</div>
-        <div>${cat[1]}</div>
-        <div style="margin-top:12px;font-size:2rem;font-weight:900">${t}%</div>
-        <div style="font-size:0.75rem;opacity:0.6">Turbulenssitodennäköisyys</div>
-    `;
-}
-
-function calcAvg(idx,key){
-    const m=["_ecmwf_ifs04","_gfs_seamless","_icon_seamless"];
-    let s=0,c=0;
-    m.forEach(mod=>{
-        if(weatherData[key+mod]){
-            s+=weatherData[key+mod][idx];
-            c++;
-        }
-    });
-    return c?(s/c).toFixed(1):"0.0";
-}
-
-function calcAvgDir(idx,key){
-    const m=["_ecmwf_ifs04","_gfs_seamless","_icon_seamless"];
-    let si=0,co=0,c=0;
-    m.forEach(mod=>{
-        if(weatherData[key+mod]){
-            let r=weatherData[key+mod][idx]*Math.PI/180;
-            si+=Math.sin(r);
-            co+=Math.cos(r);
-            c++;
-        }
-    });
-    return c?(Math.atan2(si/c,co/c)*180/Math.PI+360)%360:0;
-}
-
-function renderMain(idx){
-    const v0=parseFloat(calcAvg(idx,"windspeed_10m"));
-
-    document.getElementById("v0").innerText=v0+" m/s";
-    document.getElementById("d0").style.transform=`rotate(${calcAvgDir(idx,"winddirection_10m")}deg)`;
-    document.getElementById("v500").innerText=calcAvg(idx,"windspeed_950hPa")+" m/s";
-    document.getElementById("d500").style.transform=`rotate(${calcAvgDir(idx,"winddirection_950hPa")}deg)`;
-    document.getElementById("v1000").innerText=calcAvg(idx,"windspeed_900hPa")+" m/s";
-    document.getElementById("d1000").style.transform=`rotate(${calcAvgDir(idx,"winddirection_900hPa")}deg)`;
-    document.getElementById("v1500").innerText=calcAvg(idx,"windspeed_850hPa")+" m/s";
-    document.getElementById("d1500").style.transform=`rotate(${calcAvgDir(idx,"winddirection_850hPa")}deg)`;
-
-    renderPPGStatus(idx);
-}
+start();
 </script>
-
 
 </body>
 </html>
