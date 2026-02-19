@@ -90,11 +90,8 @@ async function haeSaa(){
 
     const lat = paikka.latitude;
     const lon = paikka.longitude;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,cloudcover,windspeed_10m,winddirection_10m,windgusts_10m,cape,precipitation&timezone=auto`;
 
-    const url =
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}
-    &hourly=temperature_2m,cloudcover,windspeed_10m,winddirection_10m,windgusts_10m,cape,precipitation
-    &timezone=auto`;
 
     const res = await fetch(url);
     const data = await res.json();
