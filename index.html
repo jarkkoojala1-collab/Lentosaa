@@ -9,7 +9,6 @@
     <title>LentoSää Pro</title>
     
     <style>
-        /* ... aikaisemmat tyylit säilyvät ... */
         :root {
             --bg: #0f172a; --card-bg: rgba(30, 41, 59, 0.7);
             --accent: #38bdf8; --success: #4ade80;
@@ -22,7 +21,6 @@
             color: var(--text); margin: 0; padding: 15px; min-height: 100vh;
         }
 
-        /* UUSI: Asennusehdotus-palkki */
         #pwaPrompt {
             display: none; background: var(--accent); color: #0f172a;
             padding: 12px; border-radius: 12px; margin-bottom: 20px;
@@ -32,32 +30,36 @@
         }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-        /* Kaikki aiemmat tyylit tähän väliin (container, section, jne.) */
         .container { max-width: 500px; margin: auto; }
         h1 { font-weight: 800; text-align: center; margin: 10px 0 5px 0; color: var(--accent); }
         .subtitle { opacity: 0.6; font-size: 0.75rem; text-align: center; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;}
+        
         .search-group { display: flex; background: var(--card-bg); padding: 5px; border-radius: 16px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
         input { flex: 1; background: transparent; border: none; color: white; padding: 12px; outline: none; font-size: 16px; }
         button { background: var(--accent); border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; color: #0f172a; cursor: pointer; }
+        
         .section { background: var(--card-bg); border-radius: 20px; padding: 18px; margin-bottom: 15px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         .wind-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .wind-arrow { display: inline-block; color: var(--accent); transition: transform 0.5s; font-size: 1.3rem; }
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+        
         .scroll-x { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scrollbar-width: none; }
         .hour-card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; min-width: 80px; text-align: center; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        
         #detailOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; display: none; padding: 30px 20px; box-sizing: border-box; overflow-y: auto; }
         .close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        
         .model-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
         .model-box { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+        
         .spot-card { margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; border-left: 4px solid var(--accent); }
+        .spot-next { color: var(--success); font-weight: 700; font-size: 0.9rem; margin-top: 4px; display: block; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="pwaPrompt" onclick="naytaOhje()">
-            ✨ Lisää LentoSää kotinäytölle (App)
-        </div>
+        <div id="pwaPrompt" onclick="naytaOhje()">✨ Lisää LentoSää kotinäytölle (App)</div>
 
         <h1>LentoSää Pro</h1>
         <p class="subtitle">Ridge & Paramotor Tool</p>
@@ -66,23 +68,29 @@
             <input id="city" type="text" placeholder="Hae kaupunkia..." onkeypress="if(event.key==='Enter') haeSaa()">
             <button onclick="haeSaa()">Hae</button>
         </div>
+
         <h2 id="otsikko" style="font-size: 1rem; opacity: 0.8; text-align: center; margin-bottom: 20px;">Ladataan...</h2>
+
         <div id="mainContent" style="display:none;">
             <div class="section">
-                <h3 style="margin:0 0 15px 0; font-size: 0.8rem; opacity: 0.7; text-transform: uppercase;">Parhaat ikkunat (48h)</h3>
-                <div id="spotList" style="font-size: 0.85rem;">Etsitään...</div>
+                <h3 style="margin:0 0 15px 0; font-size: 0.8rem; opacity: 0.7; text-transform: uppercase;">Seuraavat rinnelentokelit</h3>
+                <div id="spotList" style="font-size: 0.85rem;">Skannataan viikon ennustetta...</div>
             </div>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <div class="section" id="rinneStatus" style="text-align:center;"></div>
                 <div class="section" id="ppgStatus" style="text-align:center;"></div>
             </div>
+
             <div class="section">
-                <h3 style="margin:0 0 10px 0; font-size: 0.8rem; opacity: 0.7; text-transform: uppercase;">Korkeustuulet</h3>
+                <h3 style="margin:0 0 10px 0; font-size: 0.8rem; opacity: 0.7; text-transform: uppercase;">Korkeustuulet (Nyt)</h3>
                 <div class="wind-row"><span>Maanpinta</span><span id="v0">--</span><div id="d0" class="wind-arrow">↑</div></div>
                 <div class="wind-row"><span>500 m</span><span id="v500">--</span><div id="d500" class="wind-arrow">↑</div></div>
                 <div class="wind-row"><span>1000 m</span><span id="v1000">--</span><div id="d1000" class="wind-arrow">↑</div></div>
                 <div class="wind-row"><span>1500 m</span><span id="v1500">--</span><div id="d1500" class="wind-arrow">↑</div></div>
             </div>
+
+            <h3 style="font-size: 0.8rem; opacity: 0.7; margin: 15px 0 10px 5px; text-transform: uppercase;">Lähitunnit</h3>
             <div id="tunnit" class="scroll-x"></div>
         </div>
     </div>
@@ -91,68 +99,59 @@
         <div class="close-btn" onclick="closeDetails()">✕</div>
         <h2 id="detailTime" style="margin-top:20px; font-weight:800;">Klo --</h2>
         <p id="detailDate" style="opacity:0.5;"></p>
-        <div id="detailsGrid">
-            <div class="section"><h4>Maanpinta</h4><div class="model-grid" id="windGrid"></div></div>
-            <div class="section"><h4>500 m</h4><div class="model-grid" id="upperWindGrid500"></div></div>
-            <div class="section"><h4>1000 m</h4><div class="model-grid" id="upperWindGrid1000"></div></div>
-            <div class="section"><h4>1500 m</h4><div class="model-grid" id="upperWindGrid1500"></div></div>
-        </div>
+        <div class="section"><h4>Maanpinta</h4><div class="model-grid" id="windGrid"></div></div>
+        <div class="section"><h4>500 m</h4><div class="model-grid" id="upperWindGrid500"></div></div>
+        <div class="section"><h4>1000 m</h4><div class="model-grid" id="upperWindGrid1000"></div></div>
+        <div class="section"><h4>1500 m</h4><div class="model-grid" id="upperWindGrid1500"></div></div>
     </div>
 
     <script>
-        // ... (Kaikki aiempi JavaScript säilyy ennallaan) ...
-        // + LISÄÄ TÄMÄ UUSI LOGIIKKA:
+        let weatherData = null;
 
-        function tarkistaAsennus() {
-            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-            if (!isStandalone) {
-                document.getElementById('pwaPrompt').style.display = 'block';
-            }
-        }
-
-        function naytaOhje() {
-            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            if (isiOS) {
-                alert("Asenna sovellus: Klikkaa selaimen 'Jaa'-painiketta (neliö ja nuoli) ja valitse 'Lisää kotinäyttöön'.");
-            } else {
-                alert("Asenna sovellus: Klikkaa selaimen valikkoa (kolme pistettä) ja valitse 'Asenna sovellus' tai 'Lisää aloitusnäyttöön'.");
-            }
-        }
-
-        // Kutsu tarkistusta latauksen yhteydessä
-        window.addEventListener('load', () => {
-            tarkistaAsennus();
-            // ... aiemmat onload-jutut ...
-        });
-
-        /* Tähän loput aiemmasta scriptistä: haeSaa(), analysoiRinteet(), jne. */
         const rinnepaikat = [
             { nimi: "Ylläs (P-L)", lat: 67.56, lon: 24.22, minDeg: 270, maxDeg: 45, minW: 4, maxW: 10 },
             { nimi: "Hanko (E)", lat: 59.82, lon: 22.95, minDeg: 135, maxDeg: 225, minW: 5, maxW: 11 },
             { nimi: "Huuhaa", lat: 61.33, lon: 28.38, minDeg: 160, maxDeg: 200, minW: 4, maxW: 8 }
         ];
 
-        // Huom: varmista että aiemmat funktiot (haeSaa, analysoiRinteet jne.) 
-        // ovat tässä mukana jotta koodi toimii!
-        // [Kopioi ne aiemmasta vastauksestani tähän kohtaan]
+        window.onload = () => {
+            tarkistaAsennus();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { haeSaa(pos.coords.latitude, pos.coords.longitude); analysoiRinteet(); },
+                    () => { document.getElementById("otsikko").innerText = "Hae paikkaa"; analysoiRinteet(); }
+                );
+            } else { analysoiRinteet(); }
+        };
+
+        function tarkistaAsennus() {
+            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+            if (!isStandalone) document.getElementById('pwaPrompt').style.display = 'block';
+        }
+
+        function naytaOhje() {
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            alert(isiOS ? "Klikkaa 'Jaa' -> 'Lisää kotinäyttöön'" : "Klikkaa valikko (3 pistettä) -> 'Asenna sovellus'");
+        }
+
         async function haeSaa(lat = null, lon = null) {
-            let p = { latitude: lat, longitude: lon, name: "Nykyinen sijainti" };
+            let p = { latitude: lat, longitude: lon, name: "Sijaintisi" };
             if (!lat) {
                 const k = document.getElementById("city").value;
                 if (!k) return;
-                const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${k}&count=1&language=fi`).then(r => r.json());
-                if (!geo || !geo.results) return alert("Paikkaa ei löytynyt");
+                const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${k}&count=1`).then(r => r.json());
+                if (!geo.results) return alert("Ei löytynyt");
                 p = geo.results[0];
             }
             document.getElementById("otsikko").innerText = `📍 ${p.name}`;
             document.getElementById("mainContent").style.display = "block";
-            const fields = "temperature_2m,windspeed_10m,winddirection_10m,windspeed_950hPa,winddirection_950hPa,windspeed_900hPa,winddirection_900hPa,windspeed_850hPa,winddirection_850hPa";
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}&hourly=${fields}&models=ecmwf_ifs04,gfs_seamless,icon_seamless&timezone=auto`).then(r => r.json());
+            
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}&hourly=temperature_2m,windspeed_10m,winddirection_10m,windspeed_950hPa,winddirection_950hPa,windspeed_900hPa,winddirection_900hPa,windspeed_850hPa,winddirection_850hPa&models=ecmwf_ifs04,gfs_seamless,icon_seamless&timezone=auto`).then(r => r.json());
             weatherData = res.hourly;
             const nytIso = new Date().toISOString().slice(0, 13) + ":00";
-            let nytIdx = weatherData.time.findIndex(t => t.startsWith(nytIso));
-            if (nytIdx === -1) nytIdx = 0;
-            renderMain(nytIdx); renderHours(nytIdx);
+            let idx = weatherData.time.findIndex(t => t.startsWith(nytIso));
+            if (idx === -1) idx = 0;
+            renderMain(idx); renderHours(idx);
         }
 
         async function analysoiRinteet() {
@@ -160,18 +159,25 @@
             let html = "";
             for (const spot of rinnepaikat) {
                 try {
-                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&hourly=windspeed_10m,winddirection_10m&models=ecmwf_ifs04&timezone=auto`).then(r => r.json());
+                    // Haetaan 7 päivän ennuste (168 tuntia)
+                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&hourly=windspeed_10m,winddirection_10m&models=ecmwf_ifs04&timezone=auto&forecast_days=7`).then(r => r.json());
                     let found = false;
-                    for (let i = 0; i < 48; i++) {
+                    for (let i = 0; i < res.hourly.time.length; i++) {
                         const w = res.hourly.windspeed_10m[i], d = res.hourly.winddirection_10m[i];
                         if (w >= spot.minW && w <= spot.maxW && onkoSuuntaOk(d, spot.minDeg, spot.maxDeg)) {
                             const t = new Date(res.hourly.time[i]);
-                            html += `<div class="spot-card" style="border-left-color:var(--success)"><strong>${spot.nimi}</strong>: ${t.toLocaleDateString('fi-FI', {weekday:'short'})} klo ${res.hourly.time[i].slice(11,16)}<br>${w} m/s • ${d}°</div>`;
+                            const paiva = t.toLocaleDateString('fi-FI', { weekday: 'short', day: 'numeric', month: 'numeric' });
+                            const aika = res.hourly.time[i].slice(11, 16);
+                            html += `<div class="spot-card">
+                                <strong>${spot.nimi}</strong>
+                                <span class="spot-next">Seuraava: ${paiva} klo ${aika}</span>
+                                <div style="font-size:0.75rem; opacity:0.6; margin-top:3px;">${w} m/s • Suunta ${d}°</div>
+                            </div>`;
                             found = true; break;
                         }
                     }
-                    if(!found) html += `<div class="spot-card" style="opacity:0.5; border-left-color:var(--danger)">${spot.nimi}: Ei keliä.</div>`;
-                } catch(e) {}
+                    if(!found) html += `<div class="spot-card" style="opacity:0.4; border-left-color:var(--danger)">${spot.nimi}: Ei keliä tällä viikolla.</div>`;
+                } catch(e) { console.log("Virhe paikan haussa"); }
             }
             listDiv.innerHTML = html;
         }
@@ -179,6 +185,7 @@
         function onkoSuuntaOk(d, min, max) { return min <= max ? (d >= min && d <= max) : (d >= min || d <= max); }
         function calcAvg(idx, key) { const m = ["_ecmwf_ifs04", "_gfs_seamless", "_icon_seamless"]; let s = 0, c = 0; m.forEach(mod => { if(weatherData[key+mod]) { s += weatherData[key+mod][idx]; c++; } }); return c ? (s/c).toFixed(1) : "0.0"; }
         function calcAvgDir(idx, key) { const m = ["_ecmwf_ifs04", "_gfs_seamless", "_icon_seamless"]; let si = 0, co = 0, c = 0; m.forEach(mod => { if(weatherData[key+mod]) { let r = weatherData[key+mod][idx]*Math.PI/180; si += Math.sin(r); co += Math.cos(r); c++; } }); return c ? (Math.atan2(si/c, co/c)*180/Math.PI + 360) % 360 : 0; }
+
         function renderMain(idx) {
             const v0 = calcAvg(idx, "windspeed_10m");
             document.getElementById("v0").innerText = v0 + " m/s";
@@ -192,6 +199,7 @@
             renderStatus("rinneStatus", "🪂 Rinne", v0, 4, 10, 12);
             renderStatus("ppgStatus", "🛩️ PPG", v0, 0, 4, 6);
         }
+
         function renderStatus(id, title, w, min, opt, max) {
             let res = { label: "Heikko", color: "rgba(255,255,255,0.1)" };
             if (w >= min && w <= opt) res = { label: "Hyvä", color: "var(--success)" };
@@ -199,6 +207,7 @@
             else if (w > max) res = { label: "Kova", color: "var(--danger)" };
             document.getElementById(id).innerHTML = `<span class="status-badge" style="background:${res.color}">${res.label}</span><div style="font-weight:700">${title}</div>`;
         }
+
         function renderHours(start) {
             const div = document.getElementById("tunnit"); div.innerHTML = "";
             for (let i = start; i < start + 24; i++) {
@@ -206,6 +215,7 @@
                 div.innerHTML += `<div class="hour-card" onclick="showDetails(${i})"><div>${weatherData.time[i].slice(11,16)}</div><div style="font-weight:800">${calcAvg(i, "temperature_2m")}°</div><div style="color:var(--accent)">${calcAvg(i, "windspeed_10m")}</div><div class="wind-arrow" style="transform:rotate(${calcAvgDir(i, "winddirection_10m")}deg)">↑</div></div>`;
             }
         }
+
         function showDetails(idx) {
             document.getElementById("detailOverlay").style.display = "block";
             document.getElementById("detailTime").innerText = "Klo " + weatherData.time[idx].slice(11, 16);
@@ -214,6 +224,7 @@
             fillGrid("upperWindGrid1000", "windspeed_900hPa", idx);
             fillGrid("upperWindGrid1500", "windspeed_850hPa", idx);
         }
+
         function fillGrid(elId, key, idx) {
             const mods = ["ecmwf_ifs04", "gfs_seamless", "icon_seamless"], names = ["ECMWF", "GFS", "ICON"];
             let h = "";
@@ -223,6 +234,7 @@
             });
             document.getElementById(elId).innerHTML = h;
         }
+
         function closeDetails() { document.getElementById("detailOverlay").style.display = "none"; }
     </script>
 </body>
