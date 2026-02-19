@@ -2,35 +2,57 @@
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sääennusteiden tutkija</title>
 
     <style>
+        /* Perusasetukset puhelimelle */
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: #1e2430;
             color: white;
             text-align: center;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 100%;
             margin: auto;
         }
 
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Hakukenttä ja nappi optimoitu sormelle */
+        .search-box {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
         input, button {
-            padding: 12px;
-            font-size: 16px;
-            margin: 5px;
-            border-radius: 6px;
+            padding: 15px;
+            font-size: 16px; /* 16px estää iPhonen automaattisen zoomin */
+            border-radius: 10px;
             border: none;
             outline: none;
         }
 
         input {
-            width: 200px;
+            flex: 1;
+            max-width: 200px;
+            background: #2b3245;
+            color: white;
         }
 
         button {
@@ -38,70 +60,84 @@
             color: #1e2430;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.3s;
+            min-width: 80px;
         }
 
-        button:hover {
-            background: #81d4fa;
+        /* Analyysilaatikot */
+        .analyysi-box {
+            background: #2b3245;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        h3 {
+            margin: 10px 0 5px 0;
+            font-size: 1.2rem;
+        }
+
+        .syy-teksti {
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* Tuntikortit: Rullaavat sivusuunnassa puhelimella */
+        .tunnit-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px 5px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
         }
 
         .card {
             background: #2b3245;
-            padding: 15px;
-            margin: 8px;
-            border-radius: 10px;
-            display: inline-block;
-            width: 130px;
-            vertical-align: top;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 12px;
+            min-width: 100px;
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .wind-arrow {
             display: inline-block;
             font-size: 24px;
-            font-weight: bold;
-            margin: 5px 0;
             color: #4fc3f7;
-            line-height: 1;
+            margin: 5px 0;
         }
 
         h2 {
-            margin-top: 30px;
-            border-bottom: 1px solid #3d465d;
-            padding-bottom: 10px;
-        }
-
-        #otsikko {
-            color: #4fc3f7;
-        }
-
-        .analyysi-box {
-            background: #2b3245;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
+            font-size: 1.1rem;
+            margin-top: 25px;
+            text-align: left;
+            padding-left: 5px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>🌦️ Sääennusteiden tutkija</h1>
+        <h1>🌦️ Sääennusteet</h1>
+        <p>Lentosää: Rinne & PPG</p>
         
-        <p>Hae paikkakunnan lentosää (Rinnelento & PPG)</p>
-        
-        <input id="city" placeholder="Esim. Helsinki" onkeypress="if(event.key === 'Enter') haeSaa()">
-        <button onclick="haeSaa()">Hae sää</button>
+        <div class="search-box">
+            <input id="city" type="text" placeholder="Kaupunki..." onkeypress="if(event.key === 'Enter') haeSaa()">
+            <button onclick="haeSaa()">Hae</button>
+        </div>
 
-        <h2 id="otsikko">Anna kaupungin nimi yllä</h2>
+        <h2 id="otsikko" style="text-align:center; border:none;">Syötä paikka aloittaaksesi</h2>
 
-        <div class="analyysi-box">
+        <div class="analyysi-box" id="analyysiOsio" style="display:none;">
             <div id="rinne"></div>
             <div id="ppg"></div>
         </div>
 
-        <h2>Seuraavat 12 tuntia</h2>
-        <div id="tunnit"></div>
+        <h2 id="ennusteOtsikko" style="display:none;">Seuraavat 12 tuntia</h2>
+        <div id="tunnit" class="tunnit-container"></div>
     </div>
 
     <script>
@@ -111,10 +147,7 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 return data.results?.[0];
-            } catch (e) {
-                console.error("Geokoodaus epäonnistui", e);
-                return null;
-            }
+            } catch (e) { return null; }
         }
 
         async function haeSaa() {
@@ -122,115 +155,66 @@
             if (!kaupunki) return;
 
             const paikka = await geokoodaa(kaupunki);
-
             if (!paikka) {
-                alert("Paikkaa ei löytynyt. Kokeile toista kaupunkia.");
+                alert("Paikkaa ei löytynyt.");
                 return;
             }
 
-            document.getElementById("otsikko").innerText = paikka.name + ", " + (paikka.country || "");
+            document.getElementById("otsikko").innerText = paikka.name;
+            document.getElementById("analyysiOsio").style.display = "block";
+            document.getElementById("ennusteOtsikko").style.display = "block";
 
-            const lat = paikka.latitude;
-            const lon = paikka.longitude;
-            
-            // Haetaan säädata (mukaan lukien current_weather tunnistamaan nykyhetki)
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,cloudcover,windspeed_10m,winddirection_10m,windgusts_10m,cape,precipitation&timezone=auto&current_weather=true`;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${paikka.latitude}&longitude=${paikka.longitude}&hourly=temperature_2m,cloudcover,windspeed_10m,winddirection_10m,windgusts_10m,cape,precipitation&timezone=auto&current_weather=true`;
 
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-
-                // Etsitään nykyisen tunnin indeksi datasta
-                const nykyAika = data.current_weather.time;
-                const aloitusIndeksi = data.hourly.time.indexOf(nykyAika);
-                
-                // Jos indeksiä ei löydy, aloitetaan alusta (0)
-                const start = aloitusIndeksi !== -1 ? aloitusIndeksi : 0;
+                const start = data.hourly.time.indexOf(data.current_weather.time) || 0;
 
                 analysoiRinne(data.hourly, start);
                 analysoiPPG(data.hourly, start);
                 naytaTunnit(data.hourly, start);
-            } catch (e) {
-                alert("Säädatan haku epäonnistui.");
-                console.error(e);
-            }
+            } catch (e) { alert("Virhe säähaussa."); }
         }
 
         function analysoiRinne(h, start) {
-            let tulos = "Huono";
-            let vari = "#ff5252";
-            let syy = "Liian heikko tai puuskainen tuuli";
-
-            // Analysoidaan 12 tuntia tästä hetkestä
+            let t = "Huono", c = "#ff5252", s = "Liian kova/puuskainen tuuli";
             for (let i = start; i < start + 12; i++) {
-                const wind = h.windspeed_10m[i];
-                const gust = h.windgusts_10m[i];
-                const clouds = h.cloudcover[i];
-                const cape = h.cape?.[i] ?? 0;
-
-                if (wind >= 4 && wind <= 10 && (gust - wind) < 4 && clouds > 20 && clouds < 90 && cape < 300) {
-                    tulos = "Hyvä";
-                    vari = "#69f0ae";
-                    syy = "Tasainen nostotuuli ja sopiva pilvisyys";
-                    break;
-                } else if (wind >= 3 && wind <= 12) {
-                    tulos = "Mahdollinen";
-                    vari = "#ffd740";
-                    syy = "Rajakelpoinen tuuli, tarkista olosuhteet";
+                const w = h.windspeed_10m[i], g = h.windgusts_10m[i], cl = h.cloudcover[i];
+                if (w >= 4 && w <= 10 && (g-w) < 4 && cl > 20 && cl < 90) {
+                    t = "Hyvä"; c = "#69f0ae"; s = "Tasainen nostotuuli"; break;
+                } else if (w >= 3 && w <= 12) {
+                    t = "Mahdollinen"; c = "#ffd740"; s = "Rajakelpoinen tuuli";
                 }
             }
-
-            document.getElementById("rinne").innerHTML =
-                `<h3 style="color:${vari}">🪂 Rinnelento: ${tulos}</h3><p>${syy}</p>`;
+            document.getElementById("rinne").innerHTML = `<h3 style="color:${c}">🪂 Rinne: ${t}</h3><span class="syy-teksti">${s}</span>`;
         }
 
         function analysoiPPG(h, start) {
-            let tulos = "Huono";
-            let vari = "#ff5252";
-            let syy = "Liian tuulinen tai terminen";
-
-            // Paramoottorille katsotaan vain lähitulevaisuutta (6h)
+            let t = "Huono", c = "#ff5252", s = "Liian tuulista";
             for (let i = start; i < start + 6; i++) {
-                const wind = h.windspeed_10m[i];
-                const gust = h.windgusts_10m[i];
-                const cape = h.cape?.[i] ?? 0;
-                const rain = h.precipitation[i];
-
-                if (wind <= 4 && (gust - wind) < 2 && cape < 100 && rain == 0) {
-                    tulos = "Hyvä";
-                    vari = "#69f0ae";
-                    syy = "Tyyni ja vakaa ilma";
-                    break;
-                } else if (wind <= 6 && rain == 0) {
-                    tulos = "Mahdollinen";
-                    vari = "#ffd740";
-                    syy = "Kokenut pilotti, hieman tuulta";
+                const w = h.windspeed_10m[i], g = h.windgusts_10m[i], r = h.precipitation[i];
+                if (w <= 4 && (g-w) < 2 && r == 0) {
+                    t = "Hyvä"; c = "#69f0ae"; s = "Tyyni ja vakaa"; break;
+                } else if (w <= 6 && r == 0) {
+                    t = "Mahdollinen"; c = "#ffd740"; s = "Kokenut pilotti";
                 }
             }
-
-            document.getElementById("ppg").innerHTML =
-                `<h3 style="color:${vari}">🛩️ Paramoottori: ${tulos}</h3><p>${syy}</p>`;
+            document.getElementById("ppg").innerHTML = `<h3 style="color:${c}">🛩️ PPG: ${t}</h3><span class="syy-teksti">${s}</span>`;
         }
 
         function naytaTunnit(hourly, start) {
             const div = document.getElementById("tunnit");
             div.innerHTML = "";
-
-            // Näytetään 12 tuntia tästä hetkestä
             for (let i = start; i < start + 12; i++) {
-                if (!hourly.time[i]) break;
-
                 const time = hourly.time[i].slice(11, 16);
-                const temp = hourly.temperature_2m[i];
-                const wind = hourly.windspeed_10m[i];
                 const dir = hourly.winddirection_10m[i];
-
                 div.innerHTML += `
                     <div class="card">
                         <b>${time}</b><br>
-                        <span style="font-size: 1.2em;">${temp}°C</span><br>
-                        💨 ${wind} m/s<br>
-                        <div class="wind-arrow" style="transform: rotate(${dir}deg);" title="Suunta: ${dir}°">↑</div><br>
+                        ${hourly.temperature_2m[i]}°C<br>
+                        💨 ${hourly.windspeed_10m[i]}m/s<br>
+                        <div class="wind-arrow" style="transform: rotate(${dir}deg);">↑</div><br>
                         <small>${dir}°</small>
                     </div>`;
             }
