@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
@@ -46,7 +46,6 @@ h1{margin-top:0}
 
 <div class="card">
 <div id="status">Haetaan sijaintia…</div>
-<div id="slope"></div>
 </div>
 
 <div id="hours"></div>
@@ -95,18 +94,10 @@ function ppgStatus(i){
 }
 
 /* ==========================
-   RINNELENTO
+   TUULEN SUUNTA
    ========================== */
-function arvioiRinne(windDir, windSpeed, slopeDir){
-
-    let diff=Math.abs(windDir-slopeDir);
-    if(diff>180) diff=360-diff;
-
-    if(windSpeed<2) return "Ei nousevaa";
-    if(diff<25 && windSpeed>=4) return "Erinomainen";
-    if(diff<45 && windSpeed>=3) return "Toimiva";
-    if(diff<80) return "Heikko";
-    return "Takatuuli";
+function suuntaAsteina(dir){
+    return Math.round(dir) + "°";
 }
 
 /* ==========================
@@ -132,8 +123,6 @@ function renderHours(h){
 const container=document.getElementById("hours");
 container.innerHTML="";
 
-let firstIndex=null;
-
 for(let i=0;i<24;i++){
 
 let wind=h.windspeed_10m[i];
@@ -147,25 +136,20 @@ let hour=new Date(h.time[i]).getHours();
 let index=laskePPGTurbulenssi(wind,gust,temp,prev,hour);
 let [txt,cls]=ppgStatus(index);
 
-if(firstIndex===null) firstIndex=index;
-
 let row=document.createElement("div");
 row.className="hour";
-
-let slope=arvioiRinne(dir,wind,180);
 
 row.innerHTML=`
 <div>${hour}:00</div>
 <div>${wind.toFixed(1)} m/s</div>
 <div class="${cls}">${txt}</div>
-<div>${slope}</div>
+<div>${suuntaAsteina(dir)}</div>
 `;
 
 container.appendChild(row);
 
 if(i===0){
-document.getElementById("status").innerHTML=`Tämän hetken lentokeli: <b class="${cls}">${txt}</b>`;
-document.getElementById("slope").textContent="Rinne (etelä 180°): "+slope;
+document.getElementById("status").innerHTML=`Tämän hetken lentokeli: <b class="${cls}">${txt}</b> | Tuulen suunta: ${suuntaAsteina(dir)}`;
 }
 }
 }
