@@ -130,151 +130,124 @@
             <div class="section"><h4>1000 m</h4><div class="model-grid" id="upperWindGrid1000"></div></div>
         </div>
     </div>
+<script>
+let weatherData = null;
 
-    <script>
-        let weatherData = null;
-        const rinnepaikat = [
-            { nimi: "Porlammi", lat: 60.7107917, lon: 26.0190428, minDeg: 290, maxDeg: 320, minW: 4, maxW: 10 },
-            { nimi: "Hanko (E)", lat: 59.82, lon: 22.95, minDeg: 135, maxDeg: 225, minW: 5, maxW: 11 },
-            { nimi: "Huuhaa", lat: 61.33, lon: 28.38, minDeg: 160, maxDeg: 200, minW: 4, maxW: 8 }
-        ];
+function degDiff(a,b){
+    let d=Math.abs(a-b)%360;
+    return d>180?360-d:d;
+}
 
-        window.onload = () => {
-            tarkistaAsennus();
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => { haeSaa(pos.coords.latitude, pos.coords.longitude); analysoiRinteet(); },
-                    () => { document.getElementById("otsikko").innerText = "Hae paikkaa"; analysoiRinteet(); }
-                );
-            } else { analysoiRinteet(); }
-        };
+function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length;}
 
-        function tarkistaAsennus() {
-            if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) return;
-            document.getElementById('pwaPrompt').style.display = 'block';
+function models(idx, speedKey, dirKey){
+    const m=["_ecmwf_ifs04","_gfs_seamless","_icon_seamless"];
+    let speeds=[], dirs=[];
+    m.forEach(mod=>{
+        if(weatherData[speedKey+mod]){
+            speeds.push(weatherData[speedKey+mod][idx]);
+            dirs.push(weatherData[dirKey+mod][idx]);
         }
+    });
+    return {speeds,dirs};
+}
 
-        function naytaOhje() {
-            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            alert(isiOS ? "Klikkaa 'Jaa' -> 'Lisää kotinäyttöön'" : "Klikkaa valikko -> 'Asenna sovellus'");
+function turbulenceIndex(idx){
+
+    const sfc=models(idx,"windspeed_10m","winddirection_10m");
+    const h500=models(idx,"windspeed_950hPa","winddirection_950hPa");
+
+    if(!sfc.speeds.length||!h500.speeds.length) return 50;
+
+    // 1 Mallihajonta
+    const spreadSpeed=Math.max(...sfc.speeds)-Math.min(...sfc.speeds);
+    const spreadDir=Math.max(
+        degDiff(sfc.dirs[0],sfc.dirs[1]),
+        degDiff(sfc.dirs[0],sfc.dirs[2]),
+        degDiff(sfc.dirs[1],sfc.dirs[2])
+    );
+
+    let modelScore = Math.min(40,(spreadSpeed*6)+(spreadDir/6));
+
+    // 2 Shear (pinta vs 500m)
+    const dirShear=degDiff(avg(sfc.dirs),avg(h500.dirs));
+    const speedShear=Math.abs(avg(h500.speeds)-avg(sfc.speeds));
+    let shearScore=Math.min(35,(dirShear/2)+(speedShear*4));
+
+    // 3 Gradientti
+    let gradientScore=Math.min(15,speedShear*3);
+
+    // 4 Perustuuli
+    const wind=avg(sfc.speeds);
+    let windScore=Math.min(20,wind*3);
+
+    return Math.round(modelScore+shearScore+gradientScore+windScore);
+}
+
+function ppgCategory(t){
+    if(t<20) return ["Lasia","Erittäin sileä ilmakerros","var(--success)"];
+    if(t<35) return ["Hyvä","Normaali iltalento","var(--success)"];
+    if(t<55) return ["OK","Pientä eloa ilmassa","var(--warning)"];
+    if(t<75) return ["Turbulentti","Vaatii kokemusta","var(--danger)"];
+    return ["Älä lennä","Rajakerros sekoaa","var(--danger)"];
+}
+
+function renderPPGStatus(idx){
+
+    const t=turbulenceIndex(idx);
+    const cat=ppgCategory(t);
+
+    document.getElementById("ppgStatus").innerHTML=`
+        <span class="status-badge" style="background:${cat[2]};color:#0f172a">${cat[0]}</span>
+        <div style="font-weight:800;font-size:1.2rem;margin:10px 0">PARAMOOTTORI-INDEXI</div>
+        <div>${cat[1]}</div>
+        <div style="margin-top:12px;font-size:2rem;font-weight:900">${t}%</div>
+        <div style="font-size:0.75rem;opacity:0.6">Turbulenssitodennäköisyys</div>
+    `;
+}
+
+function calcAvg(idx,key){
+    const m=["_ecmwf_ifs04","_gfs_seamless","_icon_seamless"];
+    let s=0,c=0;
+    m.forEach(mod=>{
+        if(weatherData[key+mod]){
+            s+=weatherData[key+mod][idx];
+            c++;
         }
+    });
+    return c?(s/c).toFixed(1):"0.0";
+}
 
-        async function haeSaa(lat = null, lon = null) {
-            let p = { latitude: lat, longitude: lon, name: "Sijaintisi" };
-            if (!lat) {
-                const k = document.getElementById("city").value;
-                if (!k) return;
-                const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${k}&count=1&language=fi`).then(r => r.json());
-                if (!geo.results) return alert("Ei löydy");
-                p = geo.results[0];
-            }
-            document.getElementById("otsikko").innerText = `📍 ${p.name}`;
-            document.getElementById("mainContent").style.display = "block";
-            
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}&hourly=temperature_2m,windspeed_10m,winddirection_10m,windspeed_950hPa,winddirection_950hPa,windspeed_900hPa,winddirection_900hPa,windspeed_850hPa,winddirection_850hPa&models=ecmwf_ifs04,gfs_seamless,icon_seamless&timezone=auto`).then(r => r.json());
-            weatherData = res.hourly;
-            
-            const nyt = new Date();
-            const lokaaliTunti = `${nyt.getFullYear()}-${String(nyt.getMonth()+1).padStart(2,'0')}-${String(nyt.getDate()).padStart(2,'0')}T${String(nyt.getHours()).padStart(2,'0')}:00`;
-            let idx = weatherData.time.indexOf(lokaaliTunti);
-            if (idx === -1) idx = 0;
-            
-            renderMain(idx); renderHours(idx);
+function calcAvgDir(idx,key){
+    const m=["_ecmwf_ifs04","_gfs_seamless","_icon_seamless"];
+    let si=0,co=0,c=0;
+    m.forEach(mod=>{
+        if(weatherData[key+mod]){
+            let r=weatherData[key+mod][idx]*Math.PI/180;
+            si+=Math.sin(r);
+            co+=Math.cos(r);
+            c++;
         }
+    });
+    return c?(Math.atan2(si/c,co/c)*180/Math.PI+360)%360:0;
+}
 
-        async function analysoiRinteet() {
-            const listDiv = document.getElementById("spotList");
-            let html = "";
-            for (const spot of rinnepaikat) {
-                try {
-                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&hourly=windspeed_10m,winddirection_10m&models=ecmwf_ifs04&timezone=auto&forecast_days=7`).then(r => r.json());
-                    let found = false;
-                    for (let i = 0; i < res.hourly.time.length; i++) {
-                        const w = res.hourly.windspeed_10m[i], d = res.hourly.winddirection_10m[i];
-                        if (w >= spot.minW && w <= spot.maxW && onkoSuuntaOk(d, spot.minDeg, spot.maxDeg)) {
-                            const t = new Date(res.hourly.time[i]);
-                            const paiva = t.toLocaleDateString('fi-FI', { weekday: 'short', day: 'numeric' });
-                            html += `<div class="spot-card"><strong>${spot.nimi}</strong><span class="spot-next">🥷 Salalentokeli: ${paiva} klo ${res.hourly.time[i].slice(11,16)}</span><div style="font-size:0.75rem; opacity:0.6;">${w} m/s • ${d}°</div></div>`;
-                            found = true; break;
-                        }
-                    }
-                    if(!found) html += `<div class="spot-card" style="opacity:0.4; border-left-color:var(--danger)">${spot.nimi}: Ei hiiviskelykeliä.</div>`;
-                } catch(e) {}
-            }
-            listDiv.innerHTML = html;
-        }
+function renderMain(idx){
+    const v0=parseFloat(calcAvg(idx,"windspeed_10m"));
 
-        function onkoSuuntaOk(d, min, max) { return min <= max ? (d >= min && d <= max) : (d >= min || d <= max); }
+    document.getElementById("v0").innerText=v0+" m/s";
+    document.getElementById("d0").style.transform=`rotate(${calcAvgDir(idx,"winddirection_10m")}deg)`;
+    document.getElementById("v500").innerText=calcAvg(idx,"windspeed_950hPa")+" m/s";
+    document.getElementById("d500").style.transform=`rotate(${calcAvgDir(idx,"winddirection_950hPa")}deg)`;
+    document.getElementById("v1000").innerText=calcAvg(idx,"windspeed_900hPa")+" m/s";
+    document.getElementById("d1000").style.transform=`rotate(${calcAvgDir(idx,"winddirection_900hPa")}deg)`;
+    document.getElementById("v1500").innerText=calcAvg(idx,"windspeed_850hPa")+" m/s";
+    document.getElementById("d1500").style.transform=`rotate(${calcAvgDir(idx,"winddirection_850hPa")}deg)`;
 
-        function calcAvg(idx, key) { 
-            const m = ["_ecmwf_ifs04", "_gfs_seamless", "_icon_seamless"]; 
-            let s = 0, c = 0; 
-            m.forEach(mod => { if(weatherData[key+mod]) { s += weatherData[key+mod][idx]; c++; } }); 
-            return c ? (s/c).toFixed(1) : "0.0"; 
-        }
+    renderPPGStatus(idx);
+}
+</script>
 
-        function calcAvgDir(idx, key) { 
-            const m = ["_ecmwf_ifs04", "_gfs_seamless", "_icon_seamless"]; 
-            let si = 0, co = 0, c = 0; 
-            m.forEach(mod => { if(weatherData[key+mod]) { let r = weatherData[key+mod][idx]*Math.PI/180; si += Math.sin(r); co += Math.cos(r); c++; } }); 
-            return c ? (Math.atan2(si/c, co/c)*180/Math.PI + 360) % 360 : 0; 
-        }
 
-        function renderMain(idx) {
-            const v0 = parseFloat(calcAvg(idx, "windspeed_10m"));
-            document.getElementById("v0").innerText = v0 + " m/s";
-            document.getElementById("d0").style.transform = `rotate(${calcAvgDir(idx, "winddirection_10m")}deg)`;
-            document.getElementById("v500").innerText = calcAvg(idx, "windspeed_950hPa") + " m/s";
-            document.getElementById("d500").style.transform = `rotate(${calcAvgDir(idx, "winddirection_950hPa")}deg)`;
-            document.getElementById("v1000").innerText = calcAvg(idx, "windspeed_900hPa") + " m/s";
-            document.getElementById("d1000").style.transform = `rotate(${calcAvgDir(idx, "winddirection_900hPa")}deg)`;
-            document.getElementById("v1500").innerText = calcAvg(idx, "windspeed_850hPa") + " m/s";
-            document.getElementById("d1500").style.transform = `rotate(${calcAvgDir(idx, "winddirection_850hPa")}deg)`;
-            
-            renderPPGStatus(v0);
-        }
-
-        function renderPPGStatus(w) {
-            let res = { label: "Nyt mennään!", msg: "Täydellinen keli! Moottori selkään ja taivaalle!", color: "var(--success)" };
-            if (w < 1) res = { label: "Puhdas nolla", msg: "Peiliä on, mutta varaudu juoksemaan jalat alta!", color: "var(--success)" };
-            else if (w > 3.5 && w <= 5.5) res = { label: "Vähän rynkyttää", msg: "Lennettävissä, mutta kahvia ei kannata ilmassa juoda.", color: "var(--warning)" };
-            else if (w > 5.5 && w <= 7) res = { label: "Kovahko keli", msg: "Vain kokeneille kokeilijoille. Pysy matalalla tai hallissa.", color: "var(--danger)" };
-            else if (w > 7) res = { label: "Pysy kotona", msg: "Nyt on myrsky! Puhdista mieluummin kaasaria kotona.", color: "#7f1d1d" };
-            
-            document.getElementById("ppgStatus").innerHTML = `
-                <span class="status-badge" style="background:${res.color}; color:#0f172a">${res.label}</span>
-                <div style="font-weight:800; font-size: 1.2rem; margin: 10px 0;">PARAMOOTTORI-INDEXI</div>
-                <div style="font-size: 0.95rem; opacity: 0.9; line-height: 1.4;">${res.msg}</div>
-            `;
-        }
-
-        function renderHours(start) {
-            const div = document.getElementById("tunnit"); div.innerHTML = "";
-            for (let i = start; i < start + 24; i++) {
-                if(!weatherData.time[i]) break;
-                div.innerHTML += `<div class="hour-card" onclick="showDetails(${i})"><div>${weatherData.time[i].slice(11,16)}</div><div style="font-weight:800">${calcAvg(i, "temperature_2m")}°</div><div style="color:var(--accent); font-weight:700;">${calcAvg(i, "windspeed_10m")}</div><div class="wind-arrow" style="transform:rotate(${calcAvgDir(i, "winddirection_10m")}deg)">↑</div></div>`;
-            }
-        }
-
-        function showDetails(idx) {
-            document.getElementById("detailOverlay").style.display = "block";
-            document.getElementById("detailTime").innerText = "Klo " + weatherData.time[idx].slice(11, 16);
-            fillGrid("windGrid", "windspeed_10m", idx);
-            fillGrid("upperWindGrid500", "windspeed_950hPa", idx);
-            fillGrid("upperWindGrid1000", "windspeed_900hPa", idx);
-        }
-
-        function fillGrid(elId, key, idx) {
-            const mods = ["ecmwf_ifs04", "gfs_seamless", "icon_seamless"], names = ["ECMWF", "GFS", "ICON"];
-            let h = "";
-            mods.forEach((m, i) => {
-                const v = weatherData[key+"_"+m][idx], d = weatherData[key.replace("speed","direction")+"_"+m][idx];
-                h += `<div class="model-box"><div style="font-size:0.6rem; opacity:0.6">${names[i]}</div><strong>${v}</strong><div class="wind-arrow" style="transform:rotate(${d}deg)">↑</div></div>`;
-            });
-            document.getElementById(elId).innerHTML = h;
-        }
-
-        function closeDetails() { document.getElementById("detailOverlay").style.display = "none"; }
-    </script>
 </body>
 </html>
