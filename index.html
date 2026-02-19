@@ -3,221 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sääennusteiden tutkija</title>
+    <title>LentoSää Pro</title>
 
     <style>
-        /* Perusasetukset puhelimelle */
+        :root {
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent: #38bdf8;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #f1f5f9;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #1e2430;
-            color: white;
-            text-align: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--text);
             margin: 0;
-            padding: 15px;
-            -webkit-font-smoothing: antialiased;
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 100%;
-            margin: auto;
-        }
+        .container { max-width: 500px; margin: auto; }
 
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
+        h1 { font-weight: 800; font-size: 1.8rem; letter-spacing: -1px; margin-bottom: 5px; }
+        .subtitle { opacity: 0.6; font-size: 0.9rem; margin-bottom: 25px; }
 
-        p {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        /* Hakukenttä ja nappi optimoitu sormelle */
-        .search-box {
-            margin: 20px 0;
+        /* Moderni hakukenttä */
+        .search-group {
             display: flex;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        input, button {
-            padding: 15px;
-            font-size: 16px; /* 16px estää iPhonen automaattisen zoomin */
-            border-radius: 10px;
-            border: none;
-            outline: none;
+            background: var(--card-bg);
+            padding: 5px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
         }
 
         input {
             flex: 1;
-            max-width: 200px;
-            background: #2b3245;
+            background: transparent;
+            border: none;
             color: white;
+            padding: 12px 15px;
+            font-size: 16px;
+            outline: none;
         }
 
         button {
-            background: #4fc3f7;
-            color: #1e2430;
-            font-weight: bold;
-            cursor: pointer;
-            min-width: 80px;
-        }
-
-        /* Analyysilaatikot */
-        .analyysi-box {
-            background: #2b3245;
-            padding: 15px;
-            border-radius: 15px;
-            margin: 15px 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        h3 {
-            margin: 10px 0 5px 0;
-            font-size: 1.2rem;
-        }
-
-        .syy-teksti {
-            font-size: 0.85rem;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        /* Tuntikortit: Rullaavat sivusuunnassa puhelimella */
-        .tunnit-container {
-            display: flex;
-            overflow-x: auto;
-            gap: 10px;
-            padding: 10px 5px;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .card {
-            background: #2b3245;
-            padding: 12px;
+            background: var(--accent);
+            color: #0f172a;
+            border: none;
+            padding: 12px 20px;
             border-radius: 12px;
-            min-width: 100px;
-            flex: 0 0 auto;
-            scroll-snap-align: start;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
+
+        button:active { transform: scale(0.95); }
+
+        /* Status-pillerit */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+            text-align: left;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .wind-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .wind-row:last-child { border: none; }
 
         .wind-arrow {
+            font-size: 1.4rem;
+            color: var(--accent);
             display: inline-block;
-            font-size: 24px;
-            color: #4fc3f7;
-            margin: 5px 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        h2 {
-            font-size: 1.1rem;
-            margin-top: 25px;
-            text-align: left;
-            padding-left: 5px;
+        /* Tuntirulla */
+        .scroll-x {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 10px 0;
+            scrollbar-width: none;
+        }
+        .scroll-x::-webkit-scrollbar { display: none; }
+
+        .hour-card {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 18px;
+            min-width: 80px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .warning-banner {
+            background: rgba(248, 113, 113, 0.1);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            display: none;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>🌦️ Sääennusteet</h1>
-        <p>Lentosää: Rinne & PPG</p>
+        <h1>LentoSää Pro</h1>
+        <p class="subtitle">Rinnelento & Paramoottori • 2026</p>
         
-        <div class="search-box">
-            <input id="city" type="text" placeholder="Kaupunki..." onkeypress="if(event.key === 'Enter') haeSaa()">
+        <div class="search-group">
+            <input id="city" type="text" placeholder="Hae kaupunkia..." onkeypress="if(event.key === 'Enter') haeSaa()">
             <button onclick="haeSaa()">Hae</button>
         </div>
 
-        <h2 id="otsikko" style="text-align:center; border:none;">Syötä paikka aloittaaksesi</h2>
+        <h2 id="otsikko" style="font-size: 1.2rem; margin-left: 5px;">Hae paikka aloittaaksesi</h2>
 
-        <div class="analyysi-box" id="analyysiOsio" style="display:none;">
-            <div id="rinne"></div>
-            <div id="ppg"></div>
+        <div id="mainContent" style="display:none;">
+            <div class="section">
+                <div id="rinneStatus"></div>
+                <div id="ppgStatus"></div>
+            </div>
+
+            <div class="section">
+                <h3 style="margin-top:0; font-size: 1rem; opacity: 0.7;">Korkeustuulet</h3>
+                <div class="wind-row">
+                    <span>Maanpinta</span>
+                    <span id="v0" style="font-weight:700;">--</span>
+                    <div id="d0" class="wind-arrow">↑</div>
+                </div>
+                <div class="wind-row">
+                    <span>1500 m (850hPa)</span>
+                    <span id="v1500" style="font-weight:700;">--</span>
+                    <div id="d1500" class="wind-arrow">↑</div>
+                </div>
+                <div class="wind-row">
+                    <span>2000 m (800hPa)</span>
+                    <span id="v2000" style="font-weight:700;">--</span>
+                    <div id="d2000" class="wind-arrow">↑</div>
+                </div>
+                <div id="alertBox" class="warning-banner">⚠️ Voimakas ylätuuli! Ajelehtimisriski.</div>
+            </div>
+
+            <h3 style="font-size: 1rem; opacity: 0.7; margin-left: 5px;">Tuntiennuste</h3>
+            <div id="tunnit" class="scroll-x"></div>
         </div>
-
-        <h2 id="ennusteOtsikko" style="display:none;">Seuraavat 12 tuntia</h2>
-        <div id="tunnit" class="tunnit-container"></div>
     </div>
 
     <script>
-        async function geokoodaa(kaupunki) {
-            try {
-                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${kaupunki}&count=1&language=fi`;
-                const res = await fetch(url);
-                const data = await res.json();
-                return data.results?.[0];
-            } catch (e) { return null; }
-        }
+        const getEl = id => document.getElementById(id);
 
         async function haeSaa() {
-            const kaupunki = document.getElementById("city").value;
-            if (!kaupunki) return;
-
-            const paikka = await geokoodaa(kaupunki);
-            if (!paikka) {
-                alert("Paikkaa ei löytynyt.");
-                return;
-            }
-
-            document.getElementById("otsikko").innerText = paikka.name;
-            document.getElementById("analyysiOsio").style.display = "block";
-            document.getElementById("ennusteOtsikko").style.display = "block";
-
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${paikka.latitude}&longitude=${paikka.longitude}&hourly=temperature_2m,cloudcover,windspeed_10m,winddirection_10m,windgusts_10m,cape,precipitation&timezone=auto&current_weather=true`;
-
+            const k = getEl("city").value;
+            if (!k) return;
+            
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                const start = data.hourly.time.indexOf(data.current_weather.time) || 0;
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${k}&count=1&language=fi`);
+                const geoData = await geoRes.json();
+                const p = geoData.results?.[0];
+                if (!p) return alert("Paikkaa ei löytynyt");
 
-                analysoiRinne(data.hourly, start);
-                analysoiPPG(data.hourly, start);
-                naytaTunnit(data.hourly, start);
-            } catch (e) { alert("Virhe säähaussa."); }
+                getEl("otsikko").innerText = `📍 ${p.name}`;
+                getEl("mainContent").style.display = "block";
+
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}&hourly=temperature_2m,cloudcover,windspeed_10m,winddirection_10m,windgusts_10m,precipitation,windspeed_850hPa,winddirection_850hPa,windspeed_800hPa,winddirection_800hPa&timezone=auto&current_weather=true`);
+                const d = await weatherRes.json();
+                const s = d.hourly.time.indexOf(d.current_weather.time) || 0;
+
+                paivitaNakyma(d.hourly, s);
+            } catch (e) { alert("Virhe yhteydessä"); }
         }
 
-        function analysoiRinne(h, start) {
-            let t = "Huono", c = "#ff5252", s = "Liian kova/puuskainen tuuli";
-            for (let i = start; i < start + 12; i++) {
-                const w = h.windspeed_10m[i], g = h.windgusts_10m[i], cl = h.cloudcover[i];
-                if (w >= 4 && w <= 10 && (g-w) < 4 && cl > 20 && cl < 90) {
-                    t = "Hyvä"; c = "#69f0ae"; s = "Tasainen nostotuuli"; break;
-                } else if (w >= 3 && w <= 12) {
-                    t = "Mahdollinen"; c = "#ffd740"; s = "Rajakelpoinen tuuli";
-                }
-            }
-            document.getElementById("rinne").innerHTML = `<h3 style="color:${c}">🪂 Rinne: ${t}</h3><span class="syy-teksti">${s}</span>`;
-        }
+        function paivitaNakyma(h, i) {
+            // Ylätuulet
+            const v0 = h.windspeed_10m[i], v15 = h.windspeed_850hPa[i], v20 = h.windspeed_800hPa[i];
+            
+            getEl("v0").innerText = v0 + " m/s";
+            getEl("d0").style.transform = `rotate(${h.winddirection_10m[i]}deg)`;
+            getEl("v1500").innerText = v15 + " m/s";
+            getEl("d1500").style.transform = `rotate(${h.winddirection_850hPa[i]}deg)`;
+            getEl("v2000").innerText = v20 + " m/s";
+            getEl("d2000").style.transform = `rotate(${h.winddirection_800hPa[i]}deg)`;
+            
+            getEl("alertBox").style.display = (v15 > 12 || v20 > 12) ? "block" : "none";
 
-        function analysoiPPG(h, start) {
-            let t = "Huono", c = "#ff5252", s = "Liian tuulista";
-            for (let i = start; i < start + 6; i++) {
-                const w = h.windspeed_10m[i], g = h.windgusts_10m[i], r = h.precipitation[i];
-                if (w <= 4 && (g-w) < 2 && r == 0) {
-                    t = "Hyvä"; c = "#69f0ae"; s = "Tyyni ja vakaa"; break;
-                } else if (w <= 6 && r == 0) {
-                    t = "Mahdollinen"; c = "#ffd740"; s = "Kokenut pilotti";
-                }
-            }
-            document.getElementById("ppg").innerHTML = `<h3 style="color:${c}">🛩️ PPG: ${t}</h3><span class="syy-teksti">${s}</span>`;
-        }
+            // Analyysit
+            renderAnalyysi("rinneStatus", "🪂 Rinne", analysoi(h, i, 4, 10, 12));
+            renderAnalyysi("ppgStatus", "🛩️ PPG", analysoi(h, i, 0, 4, 6));
 
-        function naytaTunnit(hourly, start) {
-            const div = document.getElementById("tunnit");
-            div.innerHTML = "";
-            for (let i = start; i < start + 12; i++) {
-                const time = hourly.time[i].slice(11, 16);
-                const dir = hourly.winddirection_10m[i];
-                div.innerHTML += `
-                    <div class="card">
-                        <b>${time}</b><br>
-                        ${hourly.temperature_2m[i]}°C<br>
-                        💨 ${hourly.windspeed_10m[i]}m/s<br>
-                        <div class="wind-arrow" style="transform: rotate(${dir}deg);">↑</div><br>
-                        <small>${dir}°</small>
+            // Tunnit
+            getEl("tunnit").innerHTML = "";
+            for (let t = i; t < i + 12; t++) {
+                if(!h.time[t]) break;
+                getEl("tunnit").innerHTML += `
+                    <div class="hour-card">
+                        <div style="font-size:0.7rem; opacity:0.5">${h.time[t].slice(11,16)}</div>
+                        <div style="font-weight:700; margin:5px 0">${h.temperature_2m[t]}°</div>
+                        <div style="color:var(--accent); font-size:0.9rem">${h.windspeed_10m[t]}</div>
+                        <div class="wind-arrow" style="transform:rotate(${h.winddirection_10m[t]}deg); font-size:1rem">↑</div>
                     </div>`;
             }
+        }
+
+        function analysoi(h, s, min, opt, max) {
+            for (let t = s; t < s + 6; t++) {
+                const w = h.windspeed_10m[t];
+                if (w >= min && w <= opt) return { label: "Hyvä", color: "var(--success)", desc: "Loistava keli" };
+                if (w <= max) return { label: "Rajakelpo", color: "var(--warning)", desc: "Vaatii tarkkuutta" };
+            }
+            return { label: "Huono", color: "var(--danger)", desc: "Liikaa tuulta" };
+        }
+
+        function renderAnalyysi(id, title, res) {
+            getEl(id).innerHTML = `
+                <div style="margin-bottom:15px">
+                    <span class="status-badge" style="background:${res.color}">${res.label}</span>
+                    <div style="font-weight:700">${title}</div>
+                    <div style="font-size:0.8rem; opacity:0.6">${res.desc}</div>
+                </div>`;
         }
     </script>
 </body>
